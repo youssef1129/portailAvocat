@@ -15,6 +15,14 @@ async function bootstrap() {
     .setDescription('API pour le portail des avocats')
     .setVersion('1.0')
     .addTag('portail')
+    .addBearerAuth(
+      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+      'avocat-jwt',
+    )
+    .addBearerAuth(
+      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+      'deposit-session',
+    )
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);
