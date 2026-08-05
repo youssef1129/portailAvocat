@@ -1,14 +1,20 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
+  HeadBucketCommand,
+  CreateBucketCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 @Injectable()
-export class StorageService {
+export class StorageService implements OnModuleInit {
   private readonly client: S3Client;
   private readonly bucket: string;
 
@@ -20,16 +26,31 @@ export class StorageService {
     const secretKey = this.configService.get<string>('MINIO_SECRET_KEY') || '';
 
     this.bucket = bucket;
+    const useSSL = this.configService.get<string>('MINIO_USE_SSL') === 'true';
+    const protocol = useSSL ? 'https' : 'http';
     this.client = new S3Client({
-      endpoint: `${endpoint}:${port}`,
+      endpoint: `${protocol}://${endpoint}:${port}`,
       region: 'us-east-1',
       credentials: {
         accessKeyId: accessKey,
         secretAccessKey: secretKey,
       },
       forcePathStyle: true,
-      tls: this.configService.get<string>('MINIO_USE_SSL') === 'true',
     });
+  }
+
+  async onModuleInit() {
+    await this.ensureBucketExists();
+  }
+
+  private async ensureBucketExists(): Promise<void> {
+    try {
+      await this.client.send(new HeadBucketCommand({ Bucket: this.bucket }));
+    } catch {
+      // Bucket absent -> on le crée
+      await this.client.send(new CreateBucketCommand({ Bucket: this.bucket }));
+      console.log(`Bucket "${this.bucket}" créé.`);
+    }
   }
 
   async uploadFile(

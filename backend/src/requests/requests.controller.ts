@@ -22,6 +22,17 @@ import { DepositRequestDetailDto } from './dto/deposit-request-detail.dto';
 export class RequestsController {
   constructor(private readonly requestsService: RequestsService) {}
 
+  @Get(':id/files/:fileId/preview')
+  @ApiOperation({ summary: 'Get a presigned preview URL for a deposited file' })
+  @ApiOkResponse({ schema: { properties: { url: { type: 'string' } } } })
+  async previewFile(
+    @Param('id') id: string,
+    @Param('fileId') fileId: string,
+    @CurrentUser() lawyer: LawyerPayload,
+  ) {
+    return this.requestsService.getFilePreview(id, fileId, lawyer.id);
+  }
+
   @Post()
   @ApiOperation({
     summary: 'Create a new deposit request for the authenticated lawyer',

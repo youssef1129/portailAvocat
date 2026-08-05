@@ -55,8 +55,8 @@ services:
     image: quay.io/minio/minio:latest
     command: server /data --console-address ":9001"
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "21506:9000"
+      - "21507:9001"
     volumes:
       - miniodata:/data
     environment:
@@ -72,6 +72,7 @@ services:
 
 volumes:
   pgdata:
+  miniodata:
 
 networks:
   cicd-network:

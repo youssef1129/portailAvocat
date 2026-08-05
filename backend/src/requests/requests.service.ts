@@ -6,6 +6,7 @@ import { DepositedFile } from './entities/deposited-file.entity';
 import { CreateDepositRequestDto } from './dto/create-deposit-request.dto';
 import { DepositRequestStatus } from './enums/deposit-request-status.enum';
 import { Lawyer } from '../auth/entities/lawyer.entity';
+import { StorageService } from '../storage/storage.service';
 import { randomBytes, randomInt } from 'crypto';
 import {
   DEPOSIT_REQUEST_REPOSITORY,
@@ -19,6 +20,7 @@ export class RequestsService {
     private readonly depositRequestRepository: Repository<DepositRequest>,
     @Inject(DEPOSITED_FILE_REPOSITORY)
     private readonly depositedFileRepository: Repository<DepositedFile>,
+    private readonly storageService: StorageService,
   ) {}
 
   private computeStatus(request: DepositRequest): DepositRequestStatus {
@@ -101,5 +103,29 @@ export class RequestsService {
         uploadedAt: file.uploadedAt,
       })),
     };
+  }
+
+  async getFilePreview(
+    requestId: string,
+    fileId: string,
+    lawyerId: string,
+  ): Promise<{ url: string }> {
+    const request = await this.depositRequestRepository.findOne({
+      where: { id: requestId, lawyer: { id: lawyerId } },
+      relations: {
+        files: true,
+      },
+    });
+    if (!request) {
+      throw new NotFoundException('Deposit request not found.');
+    }
+    const file = request.files.find((f) => f.id === fileId);
+    if (!file) {
+      throw new NotFoundException('File not found.');
+    }
+    const url = await this.storageService.getPresignedDownloadUrl(
+      file.storageKey,
+    );
+    return { url };
   }
 }
