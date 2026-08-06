@@ -44,7 +44,7 @@ export default function RequestsListClient() {
               <h2 className="font-medium">{r.title}</h2>
               <StatusBadge kind={r.status}>{r.status}</StatusBadge>
             </div>
-            <div className="text-sm text-gray-500">Fichiers: {r.filesCount} • Créée {format(new Date(r.createdAt), 'Pp')}</div>
+            <div className="text-sm text-gray-500">Fichiers: {r.filesCount} • Créée {format(new Date(r.createdAt), "yyyy-MM-dd HH:mm")}</div>
           </div>
           <div className="flex items-center gap-2">
             <Link href={`/dashboard/requests/${r.id}`} className="text-sm text-primary">Voir</Link>

@@ -52,7 +52,7 @@ export default function RequestDetailClient({ id }: { id: string }) {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold">{detail.title}</h1>
-          <div className="text-sm text-gray-500">Créée {format(new Date(detail.createdAt), 'Pp')}</div>
+          <div className="text-sm text-gray-500">Créée {format(new Date(detail.createdAt), "yyyy-MM-dd HH:mm")}</div>
         </div>
         <StatusBadge kind={detail.status}>{detail.status}</StatusBadge>
       </div>
@@ -67,7 +67,7 @@ export default function RequestDetailClient({ id }: { id: string }) {
               <li key={f.id} className="flex items-center justify-between">
                 <div>
                   <div className="font-medium">{f.originalName}</div>
-                  <div className="text-sm text-gray-500">{Math.round(f.sizeBytes / 1024)} KB • {format(new Date(f.uploadedAt), 'Pp')}</div>
+                  <div className="text-sm text-gray-500">{Math.round(f.sizeBytes / 1024)} KB • {format(new Date(f.uploadedAt), "yyyy-MM-dd HH:mm")}</div>
                 </div>
                 <div className="flex items-center gap-2">
                   <PrimaryButton onClick={() => previewFile(f.id)}>Aperçu</PrimaryButton>

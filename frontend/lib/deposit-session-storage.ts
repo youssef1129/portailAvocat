@@ -20,7 +20,9 @@ export function clearDepositSessionToken() {
 export function subscribeToDepositSession(sub: Subscriber) {
   subscribers.add(sub);
   // return unsubscribe
-  return () => subscribers.delete(sub);
+  return () => {
+    subscribers.delete(sub);
+  };
 }
 
 export default {
