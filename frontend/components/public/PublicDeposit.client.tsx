@@ -82,7 +82,7 @@ export default function PublicDepositClient({ token }: { token: string }) {
         </form>
       ) : (
         <div className="space-y-4">
-          <div className="bg-white p-4 rounded-md shadow-sm">
+          <div className="bg-white p-4 rounded-md border border-[#E9E9E9]">
             <label className="block text-sm font-medium mb-2">Ajouter un fichier</label>
             <input type="file" onChange={(ev) => setSelectedFile(ev.target.files ? ev.target.files[0] : null)} />
             <div className="mt-4">
@@ -90,7 +90,7 @@ export default function PublicDepositClient({ token }: { token: string }) {
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-md shadow-sm">
+          <div className="bg-white p-4 rounded-md border border-[#E9E9E9]">
             <h2 className="font-medium mb-2">Fichiers déposés ({files.length})</h2>
             {files.length === 0 ? (
               <div className="text-gray-500">Aucun fichier</div>

@@ -37,7 +37,7 @@ export default function NewRequestForm() {
     return (
       <div className="max-w-md mx-auto py-8">
         <h2 className="text-xl font-semibold mb-4">Demande créée</h2>
-        <div className="bg-white p-4 rounded-md shadow-sm">
+        <div className="bg-white p-4 rounded-md border border-[#E9E9E9]">
           <div className="mb-2">Titre: {created.title}</div>
           <div className="mb-2">Public token: {created.publicToken}</div>
           <div className="mb-2">PIN (affiché une seule fois): <strong>{created.pin}</strong></div>
@@ -53,7 +53,7 @@ export default function NewRequestForm() {
       <form onSubmit={submit} className="space-y-4">
         <TextField label="Titre" value={title} onChange={(e) => setTitle(e.target.value)} />
         <div>
-          <label className="block text-sm font-medium mb-2">Date d'expiration</label>
+          <label className="block text-sm font-medium mb-2">Date d&apos;expiration</label>
           <input
             type="datetime-local"
             value={expiresAt}
@@ -61,7 +61,7 @@ export default function NewRequestForm() {
             className="w-full border p-2 rounded-md"
           />
         </div>
-        <PrimaryButton type="submit" isLoading={loading}>Créer</PrimaryButton>
+        <PrimaryButton type="submit" loading={loading}>Créer</PrimaryButton>
       </form>
     </div>
   );

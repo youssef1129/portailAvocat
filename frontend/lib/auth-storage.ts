@@ -12,6 +12,39 @@ export function getAuthToken(): string | null {
   return localStorage.getItem(AUTH_TOKEN_KEY);
 }
 
+function parseJwtPayload(token: string): Record<string, unknown> | null {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    const raw = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const json = decodeURIComponent(
+      atob(raw)
+        .split("")
+        .map((c) => `%${c.charCodeAt(0).toString(16).padStart(2, "0")}`)
+        .join("")
+    );
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
+
+export function isTokenValid(token?: string | null): boolean {
+  const rawToken = token ?? getAuthToken();
+  if (!rawToken) return false;
+  const payload = parseJwtPayload(rawToken);
+  if (!payload) return false;
+  const expValue = payload.exp;
+  if (typeof expValue === "number") {
+    return Math.floor(Date.now() / 1000) < expValue;
+  }
+  if (typeof expValue === "string") {
+    const parsed = Number(expValue);
+    return Number.isFinite(parsed) ? Math.floor(Date.now() / 1000) < parsed : false;
+  }
+  return false;
+}
+
 export function clearAuthToken() {
   setAuthToken(null);
 }
@@ -27,4 +60,5 @@ export default {
   getAuthToken,
   clearAuthToken,
   authHeader,
+  isTokenValid,
 };

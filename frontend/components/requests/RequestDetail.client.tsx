@@ -57,7 +57,7 @@ export default function RequestDetailClient({ id }: { id: string }) {
         <StatusBadge kind={detail.status}>{detail.status}</StatusBadge>
       </div>
 
-      <div className="bg-white p-4 rounded-md shadow-sm">
+      <div className="bg-white p-4 rounded-md border border-[#E9E9E9]">
         <h2 className="font-medium mb-2">Fichiers déposés ({detail.filesCount})</h2>
         {detail.files.length === 0 ? (
           <div className="text-gray-500">Aucun fichier</div>

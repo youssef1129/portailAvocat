@@ -26,7 +26,7 @@ export const TextField: React.FC<TextFieldProps> = ({ label, error, id, ...rest 
                 bg={colors.white}
                 borderColor={colors.border}
                 borderRadius={radii.md}
-                _focus={{ boxShadow: `0 0 0 3px ${colors.accentSoft}`, borderColor: colors.primary }}
+                _focus={{ boxShadow: `0 0 0 3px rgba(81, 0, 255, 0.18)`, borderColor: colors.primary }}
             />
             {error ? <Field.ErrorText>{error}</Field.ErrorText> : null}
         </Field.Root>

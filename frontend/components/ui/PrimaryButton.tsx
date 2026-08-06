@@ -17,7 +17,7 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = (props) => {
     <Button
       {...primaryButtonVariant}
       {...(rest as ButtonProps)}
-      loading={resolvedLoading} 
+      loading={resolvedLoading}
       display="inline-flex"
       alignItems="center"
       justifyContent="center"

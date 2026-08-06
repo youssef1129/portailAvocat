@@ -33,12 +33,12 @@ export default function RequestsListClient() {
   }, []);
 
   if (loading) return <div>Chargement...</div>;
-  if (requests.length === 0) return <div className="bg-white p-6 rounded-md shadow-sm">Aucune demande trouvée.</div>;
+  if (requests.length === 0) return <div className="bg-white p-6 rounded-md border border-[#E9E9E9]">Aucune demande trouvée.</div>;
 
   return (
     <div className="space-y-4">
       {requests.map((r) => (
-        <div key={r.id} className="bg-white p-4 rounded-md shadow-sm flex items-center justify-between">
+        <div key={r.id} className="bg-white p-4 rounded-md border border-[#E9E9E9] flex items-center justify-between">
           <div>
             <div className="flex items-center gap-4">
               <h2 className="font-medium">{r.title}</h2>

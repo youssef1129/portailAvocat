@@ -58,6 +58,22 @@ export const themeTokens = { colors, typography, radii, shadows };
 
 // --- config Chakra v3 réelle, indispensable pour ChakraProvider ---
 const config = defineConfig({
+  globalCss: {
+    "html, body": {
+      minHeight: "100%",
+      background: colors.white,
+      color: colors.text,
+    },
+    body: {
+      margin: 0,
+      fontFamily: typography.fontFamily,
+      background: colors.white,
+      color: colors.text,
+    },
+    "*": {
+      boxSizing: "border-box",
+    },
+  },
   theme: {
     tokens: {
       colors: {
@@ -65,7 +81,7 @@ const config = defineConfig({
         secondary: { value: colors.secondary },
         border: { value: colors.border },
         accentBg: { value: colors.accentBg },
-        accentSoft: { value: colors.accentBg }, // adapte si tu as un token séparé
+        accentSoft: { value: colors.accentSoft },
         success: { value: colors.success },
         successBg: { value: colors.successBg },
         danger: { value: colors.danger },
@@ -74,6 +90,8 @@ const config = defineConfig({
         warningBg: { value: colors.warningBg },
         info: { value: colors.info },
         infoBg: { value: colors.infoBg },
+        white: { value: colors.white },
+        text: { value: colors.text },
       },
       radii: {
         sm: { value: radii.sm },
