@@ -55,10 +55,17 @@ export function authHeader(): Record<string, string> | undefined {
   return { Authorization: `Bearer ${t}` };
 }
 
+export function getTokenPayload(): Record<string, unknown> | null {
+  const t = getAuthToken();
+  if (!t) return null;
+  return parseJwtPayload(t);
+}
+
 export default {
   setAuthToken,
   getAuthToken,
   clearAuthToken,
   authHeader,
   isTokenValid,
+  getTokenPayload,
 };

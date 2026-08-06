@@ -52,10 +52,10 @@ export default function RequestDetailClient({ id }: { id: string }) {
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
-        <div className="h-6 bg-[#F7F6FF] rounded w-32 animate-pulse" />
+        <div className="min-h-3xs bg-[#F7F6FF] rounded min-w-3xs animate-pulse" />
         <div className="bg-white p-6 rounded-xl border border-[#E9E9E9] space-y-4 animate-pulse">
-          <div className="h-8 bg-[#F7F6FF] rounded w-2/3" />
-          <div className="h-4 bg-[#F7F6FF] rounded w-1/3" />
+          <div className="min-h-20 bg-[#F7F6FF] rounded w-2/3" />
+          <div className="min-h-20 bg-[#F7F6FF] rounded w-1/3" />
         </div>
       </div>
     );

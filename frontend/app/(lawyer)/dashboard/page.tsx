@@ -3,17 +3,11 @@ import React from "react";
 import RequestsListClient from "../../../components/requests/RequestsList.client";
 import { PrimaryButton } from "../../../components/ui";
 import Link from "next/link";
-import authStorage from "../../../lib/auth-storage";
 import { useRouter } from "next/navigation";
-import { Plus, LogOut, FolderKanban } from "lucide-react";
+import { Plus, FolderKanban } from "lucide-react";
 
 export default function DashboardPage() {
   const router = useRouter();
-
-  const handleLogout = () => {
-    authStorage.clearAuthToken();
-    router.push("/login");
-  };
 
   return (
     <div className="space-y-8">
@@ -38,15 +32,7 @@ export default function DashboardPage() {
               <Plus className="w-4 h-4" />
               <span>Nouvelle demande</span>
             </PrimaryButton>
-          </Link>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="rounded-full border border-[#E9E9E9] px-4 py-2.5 text-xs font-semibold text-[#585858] hover:text-black hover:bg-[#F7F6FF] transition-all duration-150 flex items-center gap-1.5 cursor-pointer bg-white"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Déconnexion</span>
-          </button>
+          </Link>         
         </div>
       </div>
 

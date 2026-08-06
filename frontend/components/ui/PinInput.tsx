@@ -128,7 +128,7 @@ export const PinInput: React.FC<PinInputProps> = ({
             w-10 h-12 sm:w-12 sm:h-14
             text-center text-xl font-semibold
             rounded-md border
-            bg-white text-black
+            bg-[#f7f6ff] text-[#5100FF]
             transition-all duration-150 ease-in-out
             outline-none
             ${error ? "border-[#FF4C4C] text-[#FF4C4C]" : "border-[#E9E9E9] focus:border-[#5100FF] focus:ring-2 focus:ring-[#5100FF]/20"}

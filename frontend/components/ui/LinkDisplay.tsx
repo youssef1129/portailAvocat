@@ -20,7 +20,7 @@ export const LinkDisplay: React.FC<LinkDisplayProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
 
-  const formattedDate = format(new Date(expiresAt), "dd/MM/yyyy", { locale: fr });
+  const formattedDate = format(new Date(expiresAt), "dd MMMM yyyy 'à' HH:mm", { locale: fr });
 
   const handleCopy = async () => {
     try {

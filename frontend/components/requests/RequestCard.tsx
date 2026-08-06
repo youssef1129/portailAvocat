@@ -21,20 +21,10 @@ export const RequestCard: React.FC<RequestCardProps> = ({ request }) => {
   const expiresAtDate = new Date(request.expiresAt);
   const now = new Date();
 
-  const formattedCreatedDate = format(createdAtDate, "dd/MM/yyyy", { locale: fr });
+  const formattedCreatedDate = format(createdAtDate, "dd MMMM yyyy 'à' HH:mm", { locale: fr });
+  const formattedExpiresAt = format(expiresAtDate, "dd MMMM yyyy 'à' HH:mm", { locale: fr });
   const isExpired = isBefore(expiresAtDate, now) || request.status === "expiree";
-  const daysLeft = differenceInCalendarDays(expiresAtDate, now);
-
-  let metaExpirationText = "";
-  if (isExpired) {
-    metaExpirationText = "expirée";
-  } else if (daysLeft === 0) {
-    metaExpirationText = "expire aujourd'hui";
-  } else if (daysLeft === 1) {
-    metaExpirationText = "expire dans 1 jour";
-  } else {
-    metaExpirationText = `expire dans ${daysLeft} jours`;
-  }
+  const metaExpirationText = isExpired ? `expirée — ${formattedExpiresAt}` : `expire le ${formattedExpiresAt}`;
 
   const handleCopyLink = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -85,9 +75,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({ request }) => {
       <div className="pt-4 mt-5 border-t border-[#E9E9E9] flex items-center justify-between gap-2 text-xs sm:text-sm">
         <div className="flex items-center gap-1.5 text-black">
           <Files className="w-3.5 h-3.5 text-[#585858]" />
-          <span className="font-normal text-xs sm:text-sm">
-            {request.filesCount} {request.filesCount > 1 ? "pièces" : "pièce"}
-          </span>
+          <StatusBadge kind={"other"} customLabel={request.filesCount + " " + (request.filesCount > 1 ? "pièces" : "pièce")} />
         </div>
 
         <button

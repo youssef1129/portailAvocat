@@ -25,7 +25,7 @@ export default function NewRequestForm() {
       const api = createRequestsApi(token);
       const res = await api.requestsControllerCreate({ createDepositRequestDto: dto });
       setCreated(res);
-      setTimeout(() => router.push(`/dashboard/requests/${res.id}`), 3500);
+    //   setTimeout(() => router.push(`/dashboard/requests/${res.id}`), 3500);
     } catch (err) {
       console.error(err);
       const msg = err instanceof Error ? err.message : String(err);
@@ -52,8 +52,8 @@ export default function NewRequestForm() {
           </div>
 
           {/* PIN box */}
-          <div className="bg-[#F7F6FF] border border-[#E9E9E9] rounded-xl p-5 space-y-3">
-            <div className="flex items-center justify-center gap-1.5 text-xs font-semibold text-[#5100FF]">
+          <div className="border border-[#E9E9E9] rounded-xl space-y-3">
+            <div className="flex bg-[#F7F6FF] items-center p-5 justify-center gap-1.5 text-xs font-semibold text-gray-700 uppercase tracking-wider">
               <ShieldCheck className="w-4 h-4" />
               <span>Code PIN de sécurité (à transmettre à votre client)</span>
             </div>
@@ -69,9 +69,9 @@ export default function NewRequestForm() {
             <LinkDisplay url={publicUrl} expiresAt={created.expiresAt} pinDigits={6} />
           </div>
 
-          <p className="text-xs text-[#585858] animate-pulse">
+          {/* <p className="text-xs text-[#585858] animate-pulse">
             Redirection automatique vers la demande dans quelques secondes...
-          </p>
+          </p> */}
 
           <div>
             <Link href={`/dashboard/requests/${created.id}`}>

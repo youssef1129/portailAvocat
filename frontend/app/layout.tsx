@@ -4,6 +4,8 @@ import "./globals.css";
 import Providers from "./providers";
 import Link from "next/link";
 import { Scale } from "lucide-react";
+import ProfileMenuClient from "../components/ui/ProfileMenuClient";
+
 
 const inter = Inter({
   variable: "--font-sans",
@@ -31,6 +33,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </div>
                 <span className="font-semibold text-lg">Portail Avocat</span>
               </Link>
+              <div className="flex items-center gap-3">
+                <ProfileMenuClient />
+              </div>
             </div>
           </header>
           <main className="flex-1 w-full flex flex-col max-h-[calc(100dvh_-_70px)] p-2.5">
