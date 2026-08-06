@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "api:generate": "openapi-generator-cli generate -i ../backend/swagger-spec.json -g typescript-fetch -o ./src/api/generated --additional-properties=supportsES6=true,typescriptThreePlus=true,withInterfaces=true",
     "lint": "eslint"
   },
   "dependencies": {
@@ -14,6 +15,7 @@
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@openapitools/openapi-generator-cli": "^2.40.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

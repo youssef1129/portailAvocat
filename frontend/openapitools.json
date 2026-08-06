@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/@openapitools/openapi-generator-cli/config.schema.json",
+  "spaces": 2,
+  "generator-cli": {
+    "version": "7.9.0",
+    "generators": {
+      "Portail-api": {
+        "generatorName": "typescript-fetch",
+        "output": "api-client",
+        "inputSpec": "../backend/swagger-spec.json",
+        "additionalProperties": {
+          "typescriptThreePlus": true,
+          "supportsES6": true,
+          "useSinglePropertyIDTO": true
+        }
+      }
+    }
+  }
+}
