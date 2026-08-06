@@ -2,9 +2,9 @@ services:
   db:
     image: postgres:16-alpine
     restart: unless-stopped
-    ports: 
+    ports:
       - "21503:5432"
-    volumes: 
+    volumes:
       - pgdata:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=${DB_USER}
@@ -12,39 +12,6 @@ services:
       - POSTGRES_DB=${DB_NAME}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - cicd-network
-
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    ports:
-      - "21501:21501"
-    depends_on:
-      db:
-        condition: service_healthy
-      minio:
-        condition: service_started
-    environment:
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_USER=${DB_USER}
-      - DB_PASS=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
-      - PORT=21501
-      - MINIO_BUCKET=${MINIO_BUCKET}
-      - MINIO_ENDPOINT=minio
-      - MINIO_PORT=9000
-      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
-      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
-      - MINIO_USE_SSL=false
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:21501/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -64,6 +31,43 @@ services:
       - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY}
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://localhost:9000/minio/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cicd-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "21501:21501"
+    depends_on:
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - PORT=21501
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+      - DEPOSIT_SESSION_SECRET=${DEPOSIT_SESSION_SECRET}
+      - DEPOSIT_SESSION_EXPIRES_IN=${DEPOSIT_SESSION_EXPIRES_IN}
+      - MINIO_BUCKET=${MINIO_BUCKET}
+      - MINIO_ENDPOINT=minio
+      - MINIO_PORT=9000
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - MINIO_USE_SSL=false
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:21501/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
