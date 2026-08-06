@@ -13,6 +13,20 @@ import {
   DEPOSITED_FILE_REPOSITORY,
 } from '../common/constants';
 
+export function computeStatus(
+  request: Pick<DepositRequest, 'expiresAt'> & {
+    files?: unknown[] | null;
+  },
+): DepositRequestStatus {
+  if (request.expiresAt < new Date()) {
+    return DepositRequestStatus.EXPIRED;
+  }
+  if (request.files?.length && request.files.length > 0) {
+    return DepositRequestStatus.COMPLETE;
+  }
+  return DepositRequestStatus.PENDING;
+}
+
 @Injectable()
 export class RequestsService {
   constructor(
@@ -22,16 +36,6 @@ export class RequestsService {
     private readonly depositedFileRepository: Repository<DepositedFile>,
     private readonly storageService: StorageService,
   ) {}
-
-  private computeStatus(request: DepositRequest): DepositRequestStatus {
-    if (request.expiresAt < new Date()) {
-      return DepositRequestStatus.EXPIRED;
-    }
-    if (request.files?.length > 0) {
-      return DepositRequestStatus.COMPLETE;
-    }
-    return DepositRequestStatus.PENDING;
-  }
 
   async create(dto: CreateDepositRequestDto, lawyerId: string) {
     const publicToken = randomBytes(10).toString('hex');
@@ -51,7 +55,7 @@ export class RequestsService {
       id: saved.id,
       title: saved.title,
       publicToken: saved.publicToken,
-      status: this.computeStatus(saved),
+      status: computeStatus(saved),
       expiresAt: saved.expiresAt,
       createdAt: saved.createdAt,
       filesCount: 0,
@@ -71,7 +75,7 @@ export class RequestsService {
       id: request.id,
       title: request.title,
       publicToken: request.publicToken,
-      status: this.computeStatus(request),
+      status: computeStatus(request),
       expiresAt: request.expiresAt,
       createdAt: request.createdAt,
       filesCount: request.files?.length ?? 0,
@@ -92,7 +96,7 @@ export class RequestsService {
       id: request.id,
       title: request.title,
       publicToken: request.publicToken,
-      status: this.computeStatus(request),
+      status: computeStatus(request),
       expiresAt: request.expiresAt,
       createdAt: request.createdAt,
       filesCount: request.files?.length ?? 0,

@@ -59,7 +59,7 @@ export class PublicService {
       .getOne();
 
     if (!request) {
-      throw new NotFoundException('Deposit request not found.');
+      throw new NotFoundException('Token or PIN incorrect.');
     }
     if (request.expiresAt < new Date()) {
       throw new GoneException('Deposit request has expired.');
