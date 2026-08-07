@@ -1,4 +1,4 @@
-import { NestFactory } from '@nestjs/core';
+﻿import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
@@ -7,7 +7,10 @@ async function bootstrap() {
 
   app.enableCors();
   app.setGlobalPrefix('api/v1', {
-    exclude: ['health'],
+    // /metrics must stay at the root so Prometheus can scrape it directly,
+    // and /health must stay at the root so the existing docker healthcheck
+    // (http://127.0.0.1:21501/health) keeps working unchanged.
+    exclude: ['health', 'metrics'],
   });
 
   const config = new DocumentBuilder()

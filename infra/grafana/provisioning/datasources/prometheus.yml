@@ -1,0 +1,14 @@
+﻿# Auto-provisioned Prometheus datasource.
+# Reachable from inside the cicd-network only; Grafana talks to it via
+# http://prometheus:9090 which never leaves the Docker network.
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      timeInterval: 15s

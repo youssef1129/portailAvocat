@@ -1,0 +1,54 @@
+﻿# Alerting rules for the Portail stack.
+#
+# Each alert targets a real failure mode:
+#  - HighPinFailureRate        : brute-force against a public deposit link.
+#  - StorageUploadFailureRatio : MinIO / object-store degradation.
+#
+# Thresholds are tuned for low-traffic legal-deposit workloads, where a
+# handful of legitimate users may try a wrong PIN once. Sustained elevation
+# above these values is what signals trouble.
+groups:
+  - name: portail.alerts
+    interval: 30s
+    rules:
+      - alert: HighPinFailureRate
+        # More than 5 wrong-PIN attempts/sec sustained over 2 minutes.
+        # For expected traffic this stays near zero; a real brute-force
+        # against a single public link should push this well above 5/s.
+        expr: rate(pin_verification_failures_total[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+          component: public-unlock
+        annotations:
+          summary: "Sustained wrong-PIN attempts against public deposit links"
+          description: >-
+            pin_verification_failures_total is rising at
+            {{ $value | printf "%.2f" }} failures/sec over the last 5 minutes
+            (threshold: 5/s, sustained for 2m). This pattern is consistent with
+            a brute-force attempt against one or more public deposit links.
+            Investigate the source IPs from the nginx access log and consider
+            blocking them at the front proxy if the pattern continues.
+
+      - alert: StorageUploadFailureRatio
+        # More than ~10% of upload attempts are failing over a 5m window.
+        # This catches MinIO outages, network partitions to the storage
+        # container, and bucket-permission regressions.
+        expr: |
+          (
+            rate(storage_upload_failures_total[5m])
+            /
+            (rate(storage_upload_successes_total[5m]) + rate(storage_upload_failures_total[5m]))
+          ) > 0.10
+        for: 5m
+        labels:
+          severity: critical
+          component: storage
+        annotations:
+          summary: "MinIO upload failure ratio above 10% over 5 minutes"
+          description: >-
+            {{ $value | humanizePercentage }} of upload attempts to MinIO have
+            failed over the last 5 minutes (threshold: 10%). Lawyers are
+            likely losing deposited pieces. Check the MinIO container
+            (`docker compose logs minio`), disk space on the host volume, and
+            the S3 credentials configured in .env.

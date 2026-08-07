@@ -1,0 +1,38 @@
+﻿# Prometheus configuration for the Portail stack.
+#
+# Only the backend (21501) and prometheus itself (9090) are scraped.
+# Everything else is internal-only: the backend's /metrics endpoint is
+# NOT proxied by nginx, so the only way to reach it is from inside the
+# cicd-network.
+global:
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: portail-monitor
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: prometheus
+
+  - job_name: portail-backend
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['backend:21501']
+        labels:
+          service: backend
+          component: nestjs
+
+  - job_name: nginx
+    # Placeholder: nginx does not currently expose metrics. Kept here so that
+    # once nginx-prometheus-exporter is added, only one file needs updating.
+    static_configs:
+      - targets: []
+        labels:
+          service: nginx

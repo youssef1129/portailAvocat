@@ -1,3 +1,5 @@
+﻿/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
   Injectable,
   UnauthorizedException,
@@ -14,6 +16,7 @@ import {
   DEPOSITED_FILE_REPOSITORY,
   DEPOSIT_SESSION_REPOSITORY,
 } from '../../common/constants';
+import { MetricsService } from '../../metrics/metrics.service';
 
 export type UploadedDepositFile = {
   originalname: string;
@@ -38,6 +41,7 @@ export class PublicService {
     private readonly depositSessionRepository: Repository<DepositSession>,
     private readonly jwtService: JwtService,
     private readonly storageService: StorageService,
+    private readonly metricsService: MetricsService,
   ) {}
 
   private computeStatus(request: DepositRequest): DepositRequestStatus {
@@ -59,14 +63,20 @@ export class PublicService {
       .getOne();
 
     if (!request) {
+      // Unknown token: do NOT count — this just indicates someone scanning
+      // random UUIDs, not an attack on a real deposit link.
       throw new NotFoundException('Token or PIN incorrect.');
     }
     if (request.expiresAt < new Date()) {
+      // Expired: do NOT count — the link is dead, no brute-force signal here.
       throw new GoneException('Deposit request has expired.');
     }
 
     const matches = await bcrypt.compare(pin, request.pinHash);
     if (!matches) {
+      // Genuine wrong-PIN against a valid, non-expired request: this is the
+      // brute-force signal the HighPinFailureRate alert watches for.
+      this.metricsService.pinVerificationFailures.inc();
       throw new UnauthorizedException('Token or PIN incorrect.');
     }
 

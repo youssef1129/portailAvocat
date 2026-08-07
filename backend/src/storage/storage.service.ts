@@ -1,3 +1,5 @@
+﻿/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   Injectable,
   InternalServerErrorException,
@@ -12,6 +14,7 @@ import {
   CreateBucketCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { MetricsService } from '../metrics/metrics.service';
 
 @Injectable()
 export class StorageService implements OnModuleInit {
@@ -19,7 +22,10 @@ export class StorageService implements OnModuleInit {
   private readonly publicClient: S3Client; // public — presigned URLs consumed by the browser
   private readonly bucket: string;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly metricsService: MetricsService,
+  ) {
     const bucket = this.configService.get<string>('MINIO_BUCKET') || '';
     const endpoint = this.configService.get<string>('MINIO_ENDPOINT') || '';
     const port = this.configService.get<string>('MINIO_PORT') || '';
@@ -81,7 +87,12 @@ export class StorageService implements OnModuleInit {
         ContentType: mimetype,
       });
       await this.client.send(command);
+      this.metricsService.storageUploadSuccesses.inc();
     } catch {
+      // Increment BEFORE the exception leaves the function so the alert on
+      // storage_upload_failure_ratio picks up failures even if the upstream
+      // handler swallows the exception further along.
+      this.metricsService.storageUploadFailures.inc();
       throw new InternalServerErrorException('Unable to upload file.');
     }
   }

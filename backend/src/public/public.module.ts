@@ -9,6 +9,7 @@ import { DepositSessionGuard } from './guards/deposit-session.guard';
 import { PublicController } from './public.controller';
 import { PublicService } from './services/public.service';
 import { publicProviders } from './public.providers';
+import { MetricsModule } from '../metrics/metrics.module';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { publicProviders } from './public.providers';
       defaultStrategy: 'deposit-session',
     }),
     JwtModule.registerAsync({
-      imports: [ConfigModule],
+      imports: [ConfigModule, MetricsModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
         const expiresIn =

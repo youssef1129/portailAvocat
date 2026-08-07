@@ -1,4 +1,4 @@
-# HTTPS — TLS terminated here (passthrough from the machine's front proxy on 127.0.0.1:21501).
+﻿# HTTPS — TLS terminated here (passthrough from the machine's front proxy on 127.0.0.1:21501).
 # Copied to 01-https.conf by `make enable-ssl` after certificates exist.
 server {
     listen 443 ssl;
@@ -22,7 +22,21 @@ server {
         proxy_pass http://minio:9000;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-Proto $scheme;
-    }   
+    }
+
+    # --- Grafana (reverse-proxied under /grafana/) ---
+    # GF_SERVER_SERVE_FROM_SUB_PATH=true in docker-compose makes Grafana
+    # serve its assets relative to this prefix; the X-Forwarded-* headers
+    # are required for Grafana to generate correct URLs.
+    location /grafana/ {
+        proxy_pass http://grafana:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Prefix /grafana;
+    }
 
     # --- Frontend (Next.js) ---
     location / {
