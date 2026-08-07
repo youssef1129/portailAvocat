@@ -18,6 +18,12 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
+    location ~ ^/(lawyer-bucket)/ {
+        proxy_pass http://minio:9000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }   
+
     # --- Frontend (Next.js) ---
     location / {
         proxy_pass http://frontend:3000;

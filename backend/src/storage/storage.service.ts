@@ -15,7 +15,8 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 @Injectable()
 export class StorageService implements OnModuleInit {
-  private readonly client: S3Client;
+  private readonly client: S3Client; // internal — uploads, bucket checks
+  private readonly publicClient: S3Client; // public — presigned URLs consumed by the browser
   private readonly bucket: string;
 
   constructor(private readonly configService: ConfigService) {
@@ -24,12 +25,27 @@ export class StorageService implements OnModuleInit {
     const port = this.configService.get<string>('MINIO_PORT') || '';
     const accessKey = this.configService.get<string>('MINIO_ACCESS_KEY') || '';
     const secretKey = this.configService.get<string>('MINIO_SECRET_KEY') || '';
-
-    this.bucket = bucket;
     const useSSL = this.configService.get<string>('MINIO_USE_SSL') === 'true';
     const protocol = useSSL ? 'https' : 'http';
+
+    this.bucket = bucket;
+
     this.client = new S3Client({
       endpoint: `${protocol}://${endpoint}:${port}`,
+      region: 'us-east-1',
+      credentials: {
+        accessKeyId: accessKey,
+        secretAccessKey: secretKey,
+      },
+      forcePathStyle: true,
+    });
+
+    // Presigned URLs must be signed against the URL the browser will actually
+    // call — the internal Docker hostname (minio:9000) is not reachable from
+    // outside the network, so a separate public endpoint is required here.
+    const publicEndpoint = this.configService.get<string>('MINIO_PUBLIC_URL');
+    this.publicClient = new S3Client({
+      endpoint: publicEndpoint,
       region: 'us-east-1',
       credentials: {
         accessKeyId: accessKey,
@@ -47,7 +63,6 @@ export class StorageService implements OnModuleInit {
     try {
       await this.client.send(new HeadBucketCommand({ Bucket: this.bucket }));
     } catch {
-      // Bucket absent -> on le crée
       await this.client.send(new CreateBucketCommand({ Bucket: this.bucket }));
       console.log(`Bucket "${this.bucket}" créé.`);
     }
@@ -77,7 +92,9 @@ export class StorageService implements OnModuleInit {
         Bucket: this.bucket,
         Key: key,
       });
-      return await getSignedUrl(this.client, command, { expiresIn: 900 });
+      return await getSignedUrl(this.publicClient, command, {
+        expiresIn: 900,
+      });
     } catch {
       throw new InternalServerErrorException(
         'Unable to generate download URL.',
