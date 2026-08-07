@@ -1,0 +1,31 @@
+# HTTPS — TLS terminated here (passthrough from the machine's front proxy on 127.0.0.1:21501).
+# Copied to 01-https.conf by `make enable-ssl` after certificates exist.
+server {
+    listen 443 ssl;
+    server_name youssef-maazouz.stage2-div.rayan-drissi.com;
+
+    ssl_certificate     /etc/letsencrypt/live/youssef-maazouz.stage2-div.rayan-drissi.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/youssef-maazouz.stage2-div.rayan-drissi.com/privkey.pem;
+
+    client_max_body_size 25M;
+
+    # --- Backend API (NestJS global prefix: /api/v1) ---
+    location /api {
+        proxy_pass http://backend:21501/api;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # --- Frontend (Next.js) ---
+    location / {
+        proxy_pass http://frontend:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}

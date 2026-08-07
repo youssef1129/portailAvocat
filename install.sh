@@ -2,17 +2,19 @@
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
-# Portail de Depot de Pieces — one-click install
-# Build, start the stack, run migrations, seed the database, print URLs.
+# Portail de Depot de Pieces — deployment install
+# Pulls pre-built images, starts the stack, runs migrations, seeds the DB.
+# For TLS bootstrap use: make bootstrap && make certs-staging && make enable-ssl
 # ---------------------------------------------------------------------------
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT_DIR"
 
+DOMAIN="${DOMAIN:-youssef-maazouz.stage2-div.rayan-drissi.com}"
+
 log() { echo -e "\n\033[1;34m==>\033[0m $1"; }
 err() { echo -e "\033[1;31mErreur:\033[0m $1" >&2; }
 
-# Keep the window open on failure (double-click / Git Bash on Windows).
 pause_on_error() {
   local code=$?
   if [ "$code" -ne 0 ]; then
@@ -50,15 +52,18 @@ fi
 
 if [ ! -f ".env" ]; then
   err "Fichier .env introuvable a la racine."
-  echo "  Cree un fichier .env a la racine du projet (vois le Readme) puis relance." >&2
+  echo "  Copie .env.example vers .env, remplis les secrets, puis relance." >&2
   exit 1
 fi
 
+mkdir -p infra/certbot/conf infra/certbot/www
+
 # ---------------------------------------------------------------------------
-# 1. Build + start the stack
+# 1. Pull images + start the stack (no build on deployment machine)
 # ---------------------------------------------------------------------------
-log "Build des images et demarrage de la stack..."
-docker compose up -d --build
+log "Pull des images et demarrage de la stack..."
+docker compose pull
+docker compose up -d
 
 # ---------------------------------------------------------------------------
 # 2. Wait for backend to be healthy
@@ -71,7 +76,7 @@ if [ -z "$BACKEND_CID" ]; then
   exit 1
 fi
 
-TIMEOUT=90
+TIMEOUT=120
 ELAPSED=0
 until [ "$(docker inspect -f '{{.State.Health.Status}}' "$BACKEND_CID" 2>/dev/null)" = "healthy" ]; do
   if [ "$ELAPSED" -ge "$TIMEOUT" ]; then
@@ -108,26 +113,20 @@ fi
 # ---------------------------------------------------------------------------
 # 5. Print final URLs
 # ---------------------------------------------------------------------------
-# grep returns 1 when no match — must not abort under set -e
-BACKEND_PORT="$(grep -E '^PORT=' .env 2>/dev/null | cut -d '=' -f2 | tr -d '[:space:]' || true)"
-if [ -z "$BACKEND_PORT" ]; then
-  BACKEND_PORT="$(grep -E '^BACKEND_PORT=' .env 2>/dev/null | cut -d '=' -f2 | tr -d '[:space:]' || true)"
-fi
-BACKEND_PORT="${BACKEND_PORT:-21501}"
-
-MINIO_CONSOLE_PORT="$(grep -E '^MINIO_CONSOLE_PORT=' .env 2>/dev/null | cut -d '=' -f2 | tr -d '[:space:]' || true)"
-MINIO_CONSOLE_PORT="${MINIO_CONSOLE_PORT:-21507}"
-
 echo ""
 echo "======================================================================"
 echo " Installation terminee."
 echo "======================================================================"
-echo " Backend API      : http://localhost:${BACKEND_PORT}"
-echo " Swagger docs      : http://localhost:${BACKEND_PORT}/docs"
-echo " MinIO console      : http://localhost:${MINIO_CONSOLE_PORT}"
+echo " App              : https://${DOMAIN}"
+echo " API              : https://${DOMAIN}/api/v1"
+echo " Swagger          : https://${DOMAIN}/api"
 echo ""
+if [ ! -f "infra/nginx/conf.d/01-https.conf" ]; then
+  echo " TLS pas encore active. Sur le serveur de deploiement :"
+  echo "   make bootstrap && make certs-staging && make enable-ssl"
+  echo ""
+fi
 echo " Compte avocat demo : avocat1@example.com / Test1234!"
-echo " (tokens publics + PIN : voir les logs ci-dessus)"
 echo "======================================================================"
 
 trap - EXIT

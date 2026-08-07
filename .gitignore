@@ -28,3 +28,12 @@ yarn-error.log*
 
 # Docker
 .docker
+
+# TLS certificates (issued on the deployment machine)
+infra/certbot/conf/*
+!infra/certbot/conf/.gitkeep
+infra/certbot/www/*
+!infra/certbot/www/.gitkeep
+
+# HTTPS nginx config is generated on deploy (make enable-ssl)
+infra/nginx/conf.d/01-https.conf
