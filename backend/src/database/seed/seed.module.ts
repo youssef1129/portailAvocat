@@ -1,20 +1,13 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from '../database.module';
-import { AuthModule } from 'src/auth/auth.module';
-import { PublicModule } from 'src/public/public.module';
-import { RequestsModule } from 'src/requests/requests.module';
-import { StorageModule } from 'src/storage/storage.module';
+import { lawyerProviders } from 'src/auth/lawyer.provider';
+import { requestsProviders } from 'src/requests/requests.providers';
 import { SeedService } from './seed.service';
 
 @Module({
-  imports: [
-    DatabaseModule,
-    AuthModule,
-    PublicModule,
-    RequestsModule,
-    StorageModule,
-  ],
-  providers: [SeedService],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), DatabaseModule],
+  providers: [SeedService, ...lawyerProviders, ...requestsProviders],
   exports: [SeedService],
 })
 export class SeedModule {}
