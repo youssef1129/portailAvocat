@@ -3,7 +3,8 @@ set -euo pipefail
 
 # ---------------------------------------------------------------------------
 # Portail de Depot de Pieces — deployment install
-# Pulls pre-built images, starts the stack, runs migrations, seeds the DB.
+# Pulls pre-built images, starts the stack, runs migrations, seeds the DB,
+# verifies the observability stack (Prometheus + Grafana) is up.
 # For TLS bootstrap use: make bootstrap && make certs-staging && make enable-ssl
 # ---------------------------------------------------------------------------
 
@@ -111,7 +112,28 @@ if ! docker compose exec -T backend npm run seed:prod; then
 fi
 
 # ---------------------------------------------------------------------------
-# 5. Print final URLs
+# 5. Verify the observability stack (Prometheus + Grafana)
+# ---------------------------------------------------------------------------
+log "Verification de la stack d'observabilite..."
+
+PROM_CID="$(docker compose ps -q prometheus)"
+if [ -z "$PROM_CID" ] || [ "$(docker inspect -f '{{.State.Running}}' "$PROM_CID" 2>/dev/null)" != "true" ]; then
+  err "Prometheus n'a pas demarre correctement."
+  docker compose logs --tail=30 prometheus
+  exit 1
+fi
+
+GRAFANA_CID="$(docker compose ps -q grafana)"
+if [ -z "$GRAFANA_CID" ] || [ "$(docker inspect -f '{{.State.Running}}' "$GRAFANA_CID" 2>/dev/null)" != "true" ]; then
+  err "Grafana n'a pas demarre correctement."
+  docker compose logs --tail=30 grafana
+  exit 1
+fi
+
+log "Prometheus et Grafana operationnels."
+
+# ---------------------------------------------------------------------------
+# 6. Print final URLs
 # ---------------------------------------------------------------------------
 echo ""
 echo "======================================================================"
@@ -120,13 +142,15 @@ echo "======================================================================"
 echo " App              : https://${DOMAIN}"
 echo " API              : https://${DOMAIN}/api/v1"
 echo " Swagger          : https://${DOMAIN}/api"
+echo " Grafana          : https://${DOMAIN}/grafana/"
 echo ""
 if [ ! -f "infra/nginx/conf.d/01-https.conf" ]; then
   echo " TLS pas encore active. Sur le serveur de deploiement :"
   echo "   make bootstrap && make certs-staging && make enable-ssl"
   echo ""
 fi
-echo " Compte avocat demo : avocat1@example.com / Test1234!"
+echo " Compte avocat demo  : avocat1@example.com / Test1234!"
+echo " Compte Grafana demo : voir GF_SECURITY_ADMIN_USER / GF_SECURITY_ADMIN_PASSWORD dans .env"
 echo "======================================================================"
 
 trap - EXIT
