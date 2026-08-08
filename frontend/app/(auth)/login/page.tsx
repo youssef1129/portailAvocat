@@ -39,8 +39,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="h-full flex-1 flex items-center justify-center">
-      <div className="w-full max-w-md bg-white border border-[#E9E9E9] rounded-[28px] p-10 shadow-sm">
+    <div className="h-full flex-1 flex items-center justify-center px-4 py-10">
+      <div className="w-full max-w-md bg-white border border-[#E9E9E9] rounded-[28px] p-6 sm:p-10 shadow-sm">
         <div className="flex items-start gap-3 mb-6">
           <div className="w-12 h-12 rounded-2xl bg-[#F7F6FF] text-[#5100FF] border border-[#E9E9E9] flex items-center justify-center">
             <Lock className="w-5 h-5" />

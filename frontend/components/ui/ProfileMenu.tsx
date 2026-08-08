@@ -2,35 +2,39 @@
 
 import React, { useEffect, useState } from "react";
 import { getTokenPayload, clearAuthToken } from "../../lib/auth-storage";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 export default function ProfileMenu() {
   const [open, setOpen] = useState(false);
   const [payload, setPayload] = useState<Record<string, unknown> | null>(null);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     setPayload(getTokenPayload());
-  }, []);
+    setOpen(false);
+  }, [pathname]);
 
   const name = (payload && (payload.name as string)) || (payload && (payload.username as string)) || null;
   const email = (payload && (payload.email as string)) || null;
 
   const initials = name
     ? name
-        .split(" ")
-        .map((s) => s[0])
-        .slice(0, 2)
-        .join("")
-        .toUpperCase()
+      .split(" ")
+      .map((s) => s[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase()
     : email
-    ? (email as string)[0].toUpperCase()
-    : "U";
+      ? (email as string)[0].toUpperCase()
+      : "U";
 
   function handleLogout() {
     clearAuthToken();
     router.push("/login");
   }
+
+  if (!pathname.includes("dashboard")) return null;
 
   return (
     <div className="relative">
@@ -48,7 +52,7 @@ export default function ProfileMenu() {
       </button>
 
       {open ? (
-        <div className="absolute right-0 mt-2 w-56 bg-white border border-[#E9E9E9] rounded-md shadow-sm p-3 z-50">
+        <div className="absolute right-0 mt-2 w-56 max-w-[calc(100vw-2rem)] bg-white border border-[#E9E9E9] rounded-md shadow-sm p-3 z-50">
           <div className="mb-2">
             <div className="text-sm font-semibold text-black">{name ?? "Avocat"}</div>
             {email ? <div className="text-xs text-[#666]">{email}</div> : null}

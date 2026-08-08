@@ -42,7 +42,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({ request }) => {
 
   return (
     <div
-      className="bg-white border border-[#E9E9E9] rounded-xl p-6 flex flex-col justify-between transition-all duration-200 ease-in-out hover:border-[#5100FF]/50"
+      className="bg-white border border-[#E9E9E9] rounded-xl p-4 sm:p-6 flex flex-col justify-between transition-all duration-200 ease-in-out hover:border-[#5100FF]/50"
       style={{ borderRadius: radii.lg }}
     >
       <div className="space-y-3">

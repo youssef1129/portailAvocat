@@ -62,8 +62,7 @@ export default function PublicDepositClient({ token }: { token: string }) {
       }
     } catch (err) {
       console.error(err);
-      const msg = err instanceof Error ? err.message : String(err);
-      setUnlockError(msg || "Code PIN incorrect ou session expirée");
+      setUnlockError("Code PIN incorrect ou session expirée");
     } finally {
       setLoading(false);
     }
@@ -138,7 +137,7 @@ export default function PublicDepositClient({ token }: { token: string }) {
   };
 
   return (
-    <div className="max-w-xl mx-auto py-8 space-y-6">
+    <div className="max-w-xl mx-auto py-6 sm:py-8 space-y-6">
       <div className="text-center space-y-2">
         <div className="w-12 h-12 rounded-full bg-[#F7F6FF] text-[#5100FF] border border-[#E9E9E9] flex items-center justify-center mx-auto">
           <ShieldCheck className="w-6 h-6" />
@@ -200,7 +199,7 @@ export default function PublicDepositClient({ token }: { token: string }) {
 
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-[#E9E9E9] hover:border-[#5100FF] bg-[#F7F6FF] rounded-xl p-8 text-center cursor-pointer transition-all duration-150 group"
+              className="border-2 border-dashed border-[#E9E9E9] hover:border-[#5100FF] bg-[#F7F6FF] rounded-xl p-6 sm:p-8 text-center cursor-pointer transition-all duration-150 group"
             >
               <input
                 ref={fileInputRef}

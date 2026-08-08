@@ -22,6 +22,8 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = (props) => {
       alignItems="center"
       justifyContent="center"
       gap="8px"
+      px={{ base: "16px", sm: "24px" }}
+      py={{ base: "10px", sm: "14px" }}
     />
   );
 };

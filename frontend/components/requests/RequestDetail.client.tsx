@@ -52,8 +52,8 @@ export default function RequestDetailClient({ id }: { id: string }) {
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
-        <div className="min-h-3xs bg-[#F7F6FF] rounded min-w-3xs animate-pulse" />
-        <div className="bg-white p-6 rounded-xl border border-[#E9E9E9] space-y-4 animate-pulse">
+        <div className="min-h-[80px] bg-[#F7F6FF] rounded min-w-[80px] animate-pulse" />
+        <div className="bg-white p-4 sm:p-6 rounded-xl border border-[#E9E9E9] space-y-4 animate-pulse">
           <div className="min-h-20 bg-[#F7F6FF] rounded w-2/3" />
           <div className="min-h-20 bg-[#F7F6FF] rounded w-1/3" />
         </div>
@@ -63,7 +63,7 @@ export default function RequestDetailClient({ id }: { id: string }) {
 
   if (!detail) {
     return (
-      <div className="max-w-4xl mx-auto bg-white p-8 rounded-xl border border-[#E9E9E9] text-center space-y-4">
+      <div className="max-w-4xl mx-auto bg-white p-6 sm:p-8 rounded-xl border border-[#E9E9E9] text-center space-y-4">
         <p className="text-black font-medium">Détails non disponibles.</p>
         <Link href="/dashboard" className="text-xs text-[#5100FF] font-semibold hover:underline inline-flex items-center gap-1">
           <ArrowLeft className="w-3.5 h-3.5" />
@@ -90,7 +90,7 @@ export default function RequestDetailClient({ id }: { id: string }) {
       </div>
 
       {/* Header card */}
-      <div className="bg-white p-6 rounded-xl border border-[#E9E9E9] space-y-4">
+      <div className="bg-white p-4 sm:p-6 rounded-xl border border-[#E9E9E9] space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-semibold text-black mb-1">{detail.title}</h1>
@@ -109,7 +109,7 @@ export default function RequestDetailClient({ id }: { id: string }) {
       </div>
 
       {/* Files list section */}
-      <div className="bg-white p-6 rounded-xl border border-[#E9E9E9] space-y-4">
+      <div className="bg-white p-4 sm:p-6 rounded-xl border border-[#E9E9E9] space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-semibold text-black flex items-center gap-2">
             <FileText className="w-4 h-4 text-[#5100FF]" />
