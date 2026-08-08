@@ -25,6 +25,7 @@ import { DepositSession } from './decorators/deposit-session.decorator';
 import type { DepositSessionPayload } from './decorators/deposit-session.decorator';
 import type { UploadedDepositFile } from './services/public.service';
 import { DepositSessionGuard } from './guards/deposit-session.guard';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('public')
 @Controller('public')
@@ -32,6 +33,7 @@ export class PublicController {
   constructor(private readonly publicService: PublicService) {}
 
   @Post('unlock')
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 tentatives / 60s par IP
   @ApiOperation({
     summary: 'Unlock a deposit request and receive a deposit session token',
   })

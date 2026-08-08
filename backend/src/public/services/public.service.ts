@@ -32,6 +32,12 @@ import { StorageService } from '../../storage/storage.service';
 
 @Injectable()
 export class PublicService {
+  private readonly failedAttempts = new Map<
+    string,
+    { count: number; firstAttemptAt: number }
+  >();
+  private readonly MAX_ATTEMPTS = 5;
+  private readonly LOCKOUT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
   constructor(
     @Inject(DEPOSIT_REQUEST_REPOSITORY)
     private readonly depositRequestRepository: Repository<DepositRequest>,
@@ -54,6 +60,35 @@ export class PublicService {
     return DepositRequestStatus.PENDING;
   }
 
+  private isLockedOut(token: string): boolean {
+    const entry = this.failedAttempts.get(token);
+    if (!entry) return false;
+
+    const now = Date.now();
+    if (now - entry.firstAttemptAt > this.LOCKOUT_WINDOW_MS) {
+      // Window expired, reset
+      this.failedAttempts.delete(token);
+      return false;
+    }
+
+    return entry.count >= this.MAX_ATTEMPTS;
+  }
+
+  private recordFailedAttempt(token: string): void {
+    const now = Date.now();
+    const entry = this.failedAttempts.get(token);
+
+    if (!entry || now - entry.firstAttemptAt > this.LOCKOUT_WINDOW_MS) {
+      this.failedAttempts.set(token, { count: 1, firstAttemptAt: now });
+    } else {
+      entry.count += 1;
+    }
+  }
+
+  private resetAttempts(token: string): void {
+    this.failedAttempts.delete(token);
+  }
+
   async unlock(token: string, pin: string) {
     const request = await this.depositRequestRepository
       .createQueryBuilder('request')
@@ -72,13 +107,21 @@ export class PublicService {
       throw new GoneException('Deposit request has expired.');
     }
 
+    if (this.isLockedOut(token)) {
+      this.metricsService.pinVerificationFailures.inc();
+      throw new UnauthorizedException('Token or PIN incorrect.');
+    }
+
     const matches = await bcrypt.compare(pin, request.pinHash);
     if (!matches) {
       // Genuine wrong-PIN against a valid, non-expired request: this is the
       // brute-force signal the HighPinFailureRate alert watches for.
+      this.recordFailedAttempt(token);
       this.metricsService.pinVerificationFailures.inc();
       throw new UnauthorizedException('Token or PIN incorrect.');
     }
+
+    this.resetAttempts(token);
 
     const payload = { sub: request.id };
     const depositSessionToken = this.jwtService.sign(payload);

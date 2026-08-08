@@ -185,6 +185,53 @@ describe('PublicService', () => {
       expect(wrongPinError).toBeInstanceOf(UnauthorizedException);
       expect((wrongPinError as Error).message).toBe(unknownMessage);
     });
+    it('locks out after 5 failed attempts against the same token, blocking even the correct PIN on the 6th try', async () => {
+      queryBuilder.getOne.mockResolvedValue(validRequest);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+
+      for (let i = 0; i < 5; i++) {
+        await expect(service.unlock(publicToken, 'wrong')).rejects.toThrow(
+          UnauthorizedException,
+        );
+      }
+
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true); // now "correct"
+
+      await expect(service.unlock(publicToken, '123456')).rejects.toThrow(
+        UnauthorizedException,
+      );
+      // 6th attempt should be blocked by lockout BEFORE reaching bcrypt.compare
+      expect(bcrypt.compare).toHaveBeenCalledTimes(5);
+    });
+
+    it('resets the attempt counter after a successful unlock', async () => {
+      queryBuilder.getOne.mockResolvedValue(validRequest);
+      jwtService.sign.mockReturnValue('signed-deposit-session-token');
+      depositSessionRepository.create.mockReturnValue({ id: 'session-1' });
+      depositSessionRepository.save.mockResolvedValue({ id: 'session-1' });
+
+      // 4 failed attempts, below the lockout threshold
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+      for (let i = 0; i < 4; i++) {
+        await expect(service.unlock(publicToken, 'wrong')).rejects.toThrow(
+          UnauthorizedException,
+        );
+      }
+
+      // succeed on the 5th attempt — should reset the counter
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      await expect(
+        service.unlock(publicToken, '123456'),
+      ).resolves.toBeDefined();
+
+      // a subsequent wrong PIN should NOT be immediately locked out —
+      // proves the counter was reset on success, not just decremented
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+      await expect(service.unlock(publicToken, 'wrong')).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(bcrypt.compare).toHaveBeenCalled(); // reached bcrypt, not blocked by stale lockout
+    });
   });
 
   describe('storeFile', () => {

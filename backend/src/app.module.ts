@@ -6,6 +6,8 @@ import { AuthModule } from './auth/auth.module';
 import { RequestsModule } from './requests/requests.module';
 import { PublicModule } from './public/public.module';
 import { MetricsModule } from './metrics/metrics.module';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -15,7 +17,19 @@ import { MetricsModule } from './metrics/metrics.module';
     AuthModule,
     RequestsModule,
     PublicModule,
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // 60 secondes en ms
+        limit: 100, // limite globale par défaut, généreuse — le vrai throttle se fait par route
+      },
+    ]),
   ],
   controllers: [AppController],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}
