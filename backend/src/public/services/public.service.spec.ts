@@ -20,6 +20,7 @@ import {
   DEPOSITED_FILE_REPOSITORY,
   DEPOSIT_SESSION_REPOSITORY,
 } from '../../common/constants';
+import { MetricsService } from '../../metrics/metrics.service';
 
 describe('PublicService', () => {
   let service: PublicService;
@@ -94,6 +95,15 @@ describe('PublicService', () => {
         },
         { provide: JwtService, useValue: jwtService },
         { provide: StorageService, useValue: storageService },
+        {
+          provide: MetricsService,
+          useValue: {
+            pinVerificationFailures: { inc: jest.fn() },
+            storageUploadSuccesses: { inc: jest.fn() },
+            storageUploadFailures: { inc: jest.fn() },
+            httpRequests: { inc: jest.fn() },
+          },
+        },
       ],
     }).compile();
 
@@ -203,7 +213,7 @@ describe('PublicService', () => {
   });
 
   describe('listFiles', () => {
-    it('only returns files for the requestId in the session, never another request\'s files', async () => {
+    it("only returns files for the requestId in the session, never another request's files", async () => {
       const ownFiles = [
         {
           id: 'file-1',
