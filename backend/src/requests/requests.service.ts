@@ -39,7 +39,7 @@ export class RequestsService {
 
   async create(dto: CreateDepositRequestDto, lawyerId: string) {
     const publicToken = randomBytes(10).toString('hex');
-    const pin = randomInt(1000, 1000000).toString();
+    const pin = randomInt(100000, 1000000).toString();
     const pinHash = await bcrypt.hash(pin, 10);
 
     const depositRequest = this.depositRequestRepository.create({
