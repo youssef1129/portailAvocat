@@ -16,7 +16,7 @@ jobs:
           password: ${{ secrets.GHCR_PAT }}
       - uses: docker/build-push-action@v5
         with:
-          context: ./backend
+          context: ./exo2-portail-depot/backend
           push: true
           tags: ghcr.io/youssef1129/portail-backend:latest
 
@@ -31,7 +31,7 @@ jobs:
           password: ${{ secrets.GHCR_PAT }}
       - uses: docker/build-push-action@v5
         with:
-          context: ./frontend
+          context: ./exo2-portail-depot/frontend
           push: true
           tags: ghcr.io/youssef1129/portail-frontend:latest
           build-args: |
