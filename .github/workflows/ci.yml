@@ -10,7 +10,7 @@ jobs:
   test-backend:
     runs-on: ubuntu-latest
     defaults:
-      run:k
+      run:
         working-directory: exo2-portail-depot/backend
     steps:
       - uses: actions/checkout@v4
