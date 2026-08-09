@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { createRequestsApi } from "../../config/api";
 import authStorage from "../../lib/auth-storage";
-import { StatusBadge, FileRow, LinkDisplay } from "../ui";
+import { StatusBadge, FileRow, LinkDisplay, PrimaryButton } from "../ui";
 import type { DepositRequestDetailDto, DepositedFileDto } from "../../src/api/generated/models";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -51,7 +51,7 @@ export default function RequestDetailClient({ id }: { id: string }) {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-[80%] mx-auto space-y-6">
         <div className="min-h-[80px] bg-[#F7F6FF] rounded min-w-[80px] animate-pulse" />
         <div className="bg-white p-4 sm:p-6 rounded-xl border border-[#E9E9E9] space-y-4 animate-pulse">
           <div className="min-h-20 bg-[#F7F6FF] rounded w-2/3" />
@@ -66,8 +66,10 @@ export default function RequestDetailClient({ id }: { id: string }) {
       <div className="max-w-4xl mx-auto bg-white p-6 sm:p-8 rounded-xl border border-[#E9E9E9] text-center space-y-4">
         <p className="text-black font-medium">Détails non disponibles.</p>
         <Link href="/dashboard" className="text-xs text-[#5100FF] font-semibold hover:underline inline-flex items-center gap-1">
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Retour au tableau de bord</span>
+          <PrimaryButton variant={'outline'}>
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Retour au tableau de bord</span>
+          </PrimaryButton>
         </Link>
       </div>
     );
@@ -84,8 +86,10 @@ export default function RequestDetailClient({ id }: { id: string }) {
           href="/dashboard"
           className="text-xs font-semibold text-[#585858] hover:text-[#5100FF] inline-flex items-center gap-1.5 transition-colors duration-150"
         >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Retour aux demandes</span>
+          <PrimaryButton variant={'outline'}>
+            <ArrowLeft className="w-4 h-4" />
+            <span>Retour aux demandes</span>
+          </PrimaryButton>
         </Link>
       </div>
 

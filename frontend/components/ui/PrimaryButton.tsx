@@ -2,28 +2,35 @@
 import React from "react";
 import { Button } from "@chakra-ui/react";
 import type { ButtonProps } from "@chakra-ui/react";
-import { primaryButtonVariant } from "../../theme/system";
+import { primaryButtonVariant, outlineButtonVariant, buttonSizes } from "../../theme/system";
 
-export type PrimaryButtonProps = ButtonProps & { loading?: boolean };
+export type PrimaryButtonProps = ButtonProps & {
+  loading?: boolean;
+  variant?: "primary" | "outline";
+  size?: "sm" | "md" | "lg";
+};
 
-/**
- * PrimaryButton: uses design tokens from theme/system.ts
- * Variant "primary" per spec: inverted hover, inset border, full radius
- */
-export const PrimaryButton: React.FC<PrimaryButtonProps> = (props) => {
-  const { loading, ...rest } = props;
-  const resolvedLoading = typeof loading !== "undefined" ? loading : false;
+const variants = {
+  primary: primaryButtonVariant,
+  outline: outlineButtonVariant,
+};
+
+export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
+  loading = false,
+  variant = "primary",
+  size = "md",
+  ...rest
+}) => {
   return (
     <Button
-      {...primaryButtonVariant}
+      {...variants[variant]}
+      {...buttonSizes[size]}
       {...(rest as ButtonProps)}
-      loading={resolvedLoading} 
+      loading={loading}
       display="inline-flex"
       alignItems="center"
       justifyContent="center"
       gap="8px"
-      px={{ base: "16px", sm: "24px" }}
-      py={{ base: "10px", sm: "14px" }}
     />
   );
 };

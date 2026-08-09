@@ -55,6 +55,28 @@ export const primaryButtonVariant = {
   _active: { transform: "translateY(0)" },
 };
 
+export const outlineButtonVariant = {
+  bg: "transparent",
+  color: colors.gray,
+  fontWeight: typography.weights.heading,
+  borderRadius: radii.full,
+  border: "1px solid",
+  borderColor: colors.border,
+  transition: "all 160ms cubic-bezier(0.22,1,0.36,1)",
+  _hover: {
+    bg: colors.accentBg,
+    color: colors.primary,
+  },
+  _active: { transform: "translateY(0)" },
+};
+
+// Padding scale per size — keep the charte's default (24px/14px) as "md"
+export const buttonSizes = {
+  sm: { px: "16px", py: "8px", fontSize: "13px" },
+  md: { px: "24px", py: "14px", fontSize: "15px" },
+  lg: { px: "32px", py: "16px", fontSize: "16px" },
+};
+
 export const themeTokens = { colors, typography, radii, shadows };
 
 // --- config Chakra v3 réelle, indispensable pour ChakraProvider ---

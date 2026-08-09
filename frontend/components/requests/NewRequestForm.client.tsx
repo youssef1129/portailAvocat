@@ -25,7 +25,7 @@ export default function NewRequestForm() {
       const api = createRequestsApi(token);
       const res = await api.requestsControllerCreate({ createDepositRequestDto: dto });
       setCreated(res);
-    //   setTimeout(() => router.push(`/dashboard/requests/${res.id}`), 3500);
+      //   setTimeout(() => router.push(`/dashboard/requests/${res.id}`), 3500);
     } catch (err) {
       console.error(err);
       const msg = err instanceof Error ? err.message : String(err);
@@ -57,7 +57,7 @@ export default function NewRequestForm() {
               <ShieldCheck className="w-4 h-4" />
               <span>Code PIN de sécurité (à transmettre à votre client)</span>
             </div>
-            <PinInput value={created.pin || ""} onChange={() => {}} readOnly length={6} />
+            <PinInput value={created.pin || ""} onChange={() => { }} readOnly length={6} />
             <p className="text-[11px] text-[#FF4C4C] font-medium">
               Note : Ce code PIN ne sera plus réaffiché par la suite.
             </p>
@@ -90,8 +90,10 @@ export default function NewRequestForm() {
           href="/dashboard"
           className="text-xs font-semibold text-[#585858] hover:text-[#5100FF] inline-flex items-center gap-1.5 transition-colors duration-150"
         >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Retour au tableau de bord</span>
+          <PrimaryButton variant={'outline'}>
+            <ArrowLeft className="w-4 h-4" />
+            <span>Retour au tableau de bord</span>
+          </PrimaryButton>
         </Link>
       </div>
 
