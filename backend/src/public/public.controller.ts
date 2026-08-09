@@ -26,6 +26,7 @@ import type { DepositSessionPayload } from './decorators/deposit-session.decorat
 import type { UploadedDepositFile } from './services/public.service';
 import { DepositSessionGuard } from './guards/deposit-session.guard';
 import { Throttle } from '@nestjs/throttler';
+import { memoryStorage } from 'multer';
 
 @ApiTags('public')
 @Controller('public')
@@ -45,15 +46,26 @@ export class PublicController {
   @Post('files')
   @UseGuards(DepositSessionGuard)
   @ApiBearerAuth('deposit-session')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: 20 * 1024 * 1024 },
+    }),
+  )
   @ApiConsumes('multipart/form-data')
   @ApiBody({
+    description: `Pièce déposée. Formatts imposés par le serveur (détection magic-byte) :
+      PDF, JPEG et PNG uniquement (application/pdf, image/jpeg, image/png).
+      Taille maximale : 20 Mo. Le type MIME est détecté côté serveur à partir
+      du contenu du fichier ; le type déclaré par le client n'est pas utilisé.`,
     schema: {
       type: 'object',
       properties: {
         file: {
           type: 'string',
           format: 'binary',
+          description:
+            'PDF, JPEG ou PNG uniquement (max. 20 Mo). Type détecté par magic-byte serveur.',
         },
       },
     },

@@ -8,8 +8,11 @@ export class PublicDepositedFileDto {
   id!: string;
 
   @ApiProperty({
-    example: 'dossier.pdf',
-    description: 'Nom original du fichier déposé',
+    example: 'application/pdf',
+    description:
+      'Type MIME détecté serveur (côté magic-byte). Valeurs autorisées : ' +
+      'application/pdf, image/jpeg, image/png. Le type déclaré par le ' +
+      "client lors de l'upload n'est pas conservé.",
   })
   originalName!: string;
 

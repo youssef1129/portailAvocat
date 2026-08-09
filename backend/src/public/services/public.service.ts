@@ -5,6 +5,7 @@ import {
   UnauthorizedException,
   NotFoundException,
   GoneException,
+  BadRequestException,
   Inject,
 } from '@nestjs/common';
 import { Repository } from 'typeorm';
@@ -15,8 +16,11 @@ import {
   DEPOSIT_REQUEST_REPOSITORY,
   DEPOSITED_FILE_REPOSITORY,
   DEPOSIT_SESSION_REPOSITORY,
+  MAX_FILE_SIZE_BYTES,
+  ALLOWED_MIME_TYPES,
 } from '../../common/constants';
 import { MetricsService } from '../../metrics/metrics.service';
+import { fileTypeFromBuffer } from 'file-type';
 
 export type UploadedDepositFile = {
   originalname: string;
@@ -148,19 +152,36 @@ export class PublicService {
     if (request.expiresAt < new Date()) {
       throw new GoneException('Deposit request has expired.');
     }
+    // --- Enforce max size before touching object storage ---
+    if (file.buffer.length > MAX_FILE_SIZE_BYTES) {
+      throw new BadRequestException('Fichier trop volumineux.');
+    }
+
+    // --- Magic-byte verification (do NOT trust file.mimetype) ---
+    const detected = await fileTypeFromBuffer(file.buffer);
+    if (!detected || !ALLOWED_MIME_TYPES.has(detected.mime)) {
+      throw new BadRequestException('type de fichier non autorisé');
+    }
+    // Reject if the client-declared type disagrees with the real content —
+    // even when the REAL content is itself a whitelisted type, a mismatch
+    // is a spoofing signal (e.g. a real PNG relabeled as application/pdf).
+    if (detected.mime !== file.mimetype) {
+      throw new BadRequestException('type de fichier non autorisé');
+    }
+    const verifiedMimeType = detected.mime;
 
     const storageKey = `${requestId}/${randomUUID()}-${file.originalname}`;
     await this.storageService.uploadFile(
       storageKey,
       file.buffer,
-      file.mimetype,
+      verifiedMimeType,
     );
 
     const depositedFile = this.depositedFileRepository.create({
       request,
       storageKey,
       originalName: file.originalname,
-      mimeType: file.mimetype,
+      mimeType: verifiedMimeType,
       sizeBytes: file.size,
     });
     const saved = await this.depositedFileRepository.save(depositedFile);
@@ -169,6 +190,7 @@ export class PublicService {
       id: saved.id,
       originalName: saved.originalName,
       sizeBytes: Number(saved.sizeBytes),
+      mimeType: saved.mimeType,
       uploadedAt: saved.uploadedAt,
     };
   }

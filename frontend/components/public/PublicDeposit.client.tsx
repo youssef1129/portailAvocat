@@ -6,6 +6,7 @@ import { PrimaryButton, PinInput, FileRow } from "../ui";
 import type { FileRowStatus } from "../ui/FileRow";
 import type { PublicDepositedFileDto, UnlockDto, UnlockResponseDto } from "../../src/api/generated/models";
 import { Lock, Upload, ShieldCheck, FileCheck, AlertCircle } from "lucide-react";
+import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE_BYTES } from "@/constants/constants";
 
 interface UploadingFileState {
   id: string;
@@ -15,7 +16,15 @@ interface UploadingFileState {
   status: FileRowStatus;
   fileObj?: File;
 }
-
+interface UploadingFileState {
+  id: string;
+  name: string;
+  size: number;
+  progress: number;
+  status: FileRowStatus;
+  fileObj?: File;
+  errorMessage?: string; // affiché sur les échecs de validation côté client
+}
 export default function PublicDepositClient({ token }: { token: string }) {
   const [pin, setPin] = useState<string>("");
   const [sessionToken, setSessionToken] = useState<string | null>(depositSession.getDepositSessionToken());
@@ -122,6 +131,39 @@ export default function PublicDepositClient({ token }: { token: string }) {
 
     Array.from(selected).forEach((f) => {
       const tempId = `upload-${Date.now()}-${Math.random()}`;
+
+      if (!ALLOWED_MIME_TYPES.includes(f.type)) {
+        setUploadingFiles((prev) => [
+          {
+            id: tempId,
+            name: f.name,
+            size: f.size,
+            progress: 0,
+            status: "error",
+            fileObj: f,
+            errorMessage: "Type de fichier non autorisé (PDF, JPG ou PNG uniquement).",
+          },
+          ...prev,
+        ]);
+        return;
+      }
+
+      if (f.size > MAX_FILE_SIZE_BYTES) {
+        setUploadingFiles((prev) => [
+          {
+            id: tempId,
+            name: f.name,
+            size: f.size,
+            progress: 0,
+            status: "error",
+            fileObj: f,
+            errorMessage: "Fichier trop volumineux (20 Mo maximum).",
+          },
+          ...prev,
+        ]);
+        return;
+      }
+
       uploadSingleFile(f, tempId);
     });
 
@@ -205,6 +247,7 @@ export default function PublicDepositClient({ token }: { token: string }) {
                 ref={fileInputRef}
                 type="file"
                 multiple
+                accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
                 className="hidden"
                 onChange={handleFileSelect}
               />
@@ -215,7 +258,7 @@ export default function PublicDepositClient({ token }: { token: string }) {
                 Cliquez pour choisir vos fichiers
               </p>
               <p className="text-xs text-[#585858]">
-                Sélectionnez un ou plusieurs documents (PDF, images, etc.)
+                Sélectionnez un ou plusieurs documents — PDF, JPG ou PNG, 20 Mo maximum par fichier.
               </p>
             </div>
           </div>

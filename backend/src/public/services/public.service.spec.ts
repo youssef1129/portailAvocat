@@ -2,9 +2,13 @@ jest.mock('bcrypt');
 jest.mock('crypto', () => ({
   randomUUID: jest.fn(() => 'uuid-file-1'),
 }));
+jest.mock('file-type', () => ({
+  fileTypeFromBuffer: jest.fn(),
+}));
 
 import { Test, TestingModule } from '@nestjs/testing';
 import {
+  BadRequestException,
   GoneException,
   NotFoundException,
   UnauthorizedException,
@@ -21,6 +25,7 @@ import {
   DEPOSIT_SESSION_REPOSITORY,
 } from '../../common/constants';
 import { MetricsService } from '../../metrics/metrics.service';
+import { fileTypeFromBuffer } from 'file-type';
 
 describe('PublicService', () => {
   let service: PublicService;
@@ -185,6 +190,7 @@ describe('PublicService', () => {
       expect(wrongPinError).toBeInstanceOf(UnauthorizedException);
       expect((wrongPinError as Error).message).toBe(unknownMessage);
     });
+
     it('locks out after 5 failed attempts against the same token, blocking even the correct PIN on the 6th try', async () => {
       queryBuilder.getOne.mockResolvedValue(validRequest);
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
@@ -235,6 +241,159 @@ describe('PublicService', () => {
   });
 
   describe('storeFile', () => {
+    const validRequest = {
+      id: requestId,
+      expiresAt: new Date('2026-08-06T13:00:00.000Z'),
+      files: [],
+    } as DepositRequest;
+
+    beforeEach(() => {
+      (fileTypeFromBuffer as jest.Mock).mockReset();
+    });
+
+    it('uploads when the magic-byte MIME matches the client-declared type', async () => {
+      depositRequestRepository.findOne.mockResolvedValue(validRequest);
+      (fileTypeFromBuffer as jest.Mock).mockResolvedValue({
+        ext: 'pdf',
+        mime: 'application/pdf',
+      });
+      depositedFileRepository.create.mockReturnValue({ id: 'f-1' });
+      depositedFileRepository.save.mockResolvedValue({
+        id: 'f-1',
+        originalName: 'piece.pdf',
+        sizeBytes: 12,
+        uploadedAt: now,
+      });
+      storageService.uploadFile.mockResolvedValue(undefined);
+
+      const result = await service.storeFile(requestId, {
+        originalname: 'piece.pdf',
+        buffer: Buffer.from('%PDF-1.4...'),
+        mimetype: 'application/pdf',
+        size: 12,
+      });
+
+      expect(fileTypeFromBuffer).toHaveBeenCalledWith(
+        Buffer.from('%PDF-1.4...'),
+      );
+      expect(fileTypeFromBuffer).toHaveBeenCalledTimes(1);
+      expect(storageService.uploadFile).toHaveBeenCalledWith(
+        expect.stringContaining(requestId + '/'),
+        Buffer.from('%PDF-1.4...'),
+        'application/pdf', // verified mime, not the client one
+      );
+      expect(result.id).toBe('f-1');
+    });
+
+    // Each case declares its lie explicitly: what the client CLAIMS the
+    // mimetype is (declaredMime) vs what the magic-byte detector actually
+    // found (detected). Any disagreement between the two is rejected,
+    // even when the real content is itself a whitelisted type — a mismatch
+    // is treated as a spoofing signal on its own.
+    it.each([
+      {
+        label: 'declared PDF but content is actually PNG',
+        declaredMime: 'application/pdf',
+        detected: { ext: 'png', mime: 'image/png' },
+        filename: 'trick.pdf',
+      },
+      {
+        label: 'declared PNG but content is actually PDF',
+        declaredMime: 'image/png',
+        detected: { ext: 'pdf', mime: 'application/pdf' },
+        filename: 'trick.png',
+      },
+      {
+        label: 'declared JPEG but content is actually PDF',
+        declaredMime: 'image/jpeg',
+        detected: { ext: 'pdf', mime: 'application/pdf' },
+        filename: 'trick.jpg',
+      },
+    ])('rejects when $label', async ({ declaredMime, detected, filename }) => {
+      depositRequestRepository.findOne.mockResolvedValue(validRequest);
+      (fileTypeFromBuffer as jest.Mock).mockResolvedValue(detected);
+
+      await expect(
+        service.storeFile(requestId, {
+          originalname: filename,
+          buffer: Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+          mimetype: declaredMime,
+          size: 8,
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      // Generic message — never reveals what was actually detected
+      await expect(
+        service.storeFile(requestId, {
+          originalname: filename,
+          buffer: Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+          mimetype: declaredMime,
+          size: 8,
+        }),
+      ).rejects.toThrow('type de fichier non autorisé');
+
+      // Must NOT have attempted an upload or a DB write
+      expect(storageService.uploadFile).not.toHaveBeenCalled();
+      expect(depositedFileRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('rejects a buffer whose real type is not in the whitelist (e.g. GIF)', async () => {
+      depositRequestRepository.findOne.mockResolvedValue(validRequest);
+      (fileTypeFromBuffer as jest.Mock).mockResolvedValue({
+        ext: 'gif',
+        mime: 'image/gif',
+      });
+
+      await expect(
+        service.storeFile(requestId, {
+          originalname: 'anim.gif',
+          buffer: Buffer.from([0x47, 0x49, 0x46, 0x38, 0x39, 0x61]),
+          mimetype: 'image/gif',
+          size: 6,
+        }),
+      ).rejects.toThrow('type de fichier non autorisé');
+
+      expect(storageService.uploadFile).not.toHaveBeenCalled();
+    });
+
+    it('rejects when file-type cannot identify the content at all', async () => {
+      depositRequestRepository.findOne.mockResolvedValue(validRequest);
+      (fileTypeFromBuffer as jest.Mock).mockResolvedValue(undefined);
+
+      await expect(
+        service.storeFile(requestId, {
+          originalname: 'unknown.bin',
+          buffer: Buffer.from('not-a-real-file-header'),
+          mimetype: 'application/octet-stream',
+          size: 9,
+        }),
+      ).rejects.toThrow('type de fichier non autorisé');
+
+      expect(storageService.uploadFile).not.toHaveBeenCalled();
+    });
+
+    it('rejects files larger than 20 MiB', async () => {
+      depositRequestRepository.findOne.mockResolvedValue(validRequest);
+      (fileTypeFromBuffer as jest.Mock).mockResolvedValue({
+        ext: 'pdf',
+        mime: 'application/pdf',
+      });
+
+      const bigBuffer = Buffer.alloc(20 * 1024 * 1024 + 1, 0x25); // '%PDF'-ish prefix won't matter; size is checked first
+      await expect(
+        service.storeFile(requestId, {
+          originalname: 'big.pdf',
+          buffer: bigBuffer,
+          mimetype: 'application/pdf',
+          size: bigBuffer.length,
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      // size guard fires BEFORE magic-byte detection / upload
+      expect(storageService.uploadFile).not.toHaveBeenCalled();
+      expect(fileTypeFromBuffer).not.toHaveBeenCalled();
+    });
+
     it('re-checks expiration at upload time and throws when expiresAt has passed mid-session', async () => {
       const expiresAt = new Date('2026-08-06T12:30:00.000Z');
       depositRequestRepository.findOne.mockResolvedValue({
