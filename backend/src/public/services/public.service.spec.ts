@@ -3,7 +3,7 @@ jest.mock('crypto', () => ({
   randomUUID: jest.fn(() => 'uuid-file-1'),
 }));
 jest.mock('file-type', () => ({
-  fileTypeFromBuffer: jest.fn(),
+  fromBuffer: jest.fn(),
 }));
 
 import { Test, TestingModule } from '@nestjs/testing';
@@ -25,7 +25,7 @@ import {
   DEPOSIT_SESSION_REPOSITORY,
 } from '../../common/constants';
 import { MetricsService } from '../../metrics/metrics.service';
-import { fileTypeFromBuffer } from 'file-type';
+import * as FileType from 'file-type';
 
 describe('PublicService', () => {
   let service: PublicService;
@@ -57,7 +57,7 @@ describe('PublicService', () => {
   const pinHash = 'hashed-pin';
 
   beforeEach(async () => {
-    jest.useFakeTimers();
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate'] });
     jest.setSystemTime(now);
 
     queryBuilder = {
@@ -248,12 +248,12 @@ describe('PublicService', () => {
     } as DepositRequest;
 
     beforeEach(() => {
-      (fileTypeFromBuffer as jest.Mock).mockReset();
+      (FileType.fromBuffer as jest.Mock).mockReset();
     });
 
     it('uploads when the magic-byte MIME matches the client-declared type', async () => {
       depositRequestRepository.findOne.mockResolvedValue(validRequest);
-      (fileTypeFromBuffer as jest.Mock).mockResolvedValue({
+      (FileType.fromBuffer as jest.Mock).mockResolvedValue({
         ext: 'pdf',
         mime: 'application/pdf',
       });
@@ -273,10 +273,10 @@ describe('PublicService', () => {
         size: 12,
       });
 
-      expect(fileTypeFromBuffer).toHaveBeenCalledWith(
+      expect(FileType.fromBuffer).toHaveBeenCalledWith(
         Buffer.from('%PDF-1.4...'),
       );
-      expect(fileTypeFromBuffer).toHaveBeenCalledTimes(1);
+      expect(FileType.fromBuffer).toHaveBeenCalledTimes(1);
       expect(storageService.uploadFile).toHaveBeenCalledWith(
         expect.stringContaining(requestId + '/'),
         Buffer.from('%PDF-1.4...'),
@@ -311,7 +311,7 @@ describe('PublicService', () => {
       },
     ])('rejects when $label', async ({ declaredMime, detected, filename }) => {
       depositRequestRepository.findOne.mockResolvedValue(validRequest);
-      (fileTypeFromBuffer as jest.Mock).mockResolvedValue(detected);
+      (FileType.fromBuffer as jest.Mock).mockResolvedValue(detected);
 
       await expect(
         service.storeFile(requestId, {
@@ -339,7 +339,7 @@ describe('PublicService', () => {
 
     it('rejects a buffer whose real type is not in the whitelist (e.g. GIF)', async () => {
       depositRequestRepository.findOne.mockResolvedValue(validRequest);
-      (fileTypeFromBuffer as jest.Mock).mockResolvedValue({
+      (FileType.fromBuffer as jest.Mock).mockResolvedValue({
         ext: 'gif',
         mime: 'image/gif',
       });
@@ -358,7 +358,7 @@ describe('PublicService', () => {
 
     it('rejects when file-type cannot identify the content at all', async () => {
       depositRequestRepository.findOne.mockResolvedValue(validRequest);
-      (fileTypeFromBuffer as jest.Mock).mockResolvedValue(undefined);
+      (FileType.fromBuffer as jest.Mock).mockResolvedValue(undefined);
 
       await expect(
         service.storeFile(requestId, {
@@ -374,7 +374,7 @@ describe('PublicService', () => {
 
     it('rejects files larger than 20 MiB', async () => {
       depositRequestRepository.findOne.mockResolvedValue(validRequest);
-      (fileTypeFromBuffer as jest.Mock).mockResolvedValue({
+      (FileType.fromBuffer as jest.Mock).mockResolvedValue({
         ext: 'pdf',
         mime: 'application/pdf',
       });
@@ -391,7 +391,7 @@ describe('PublicService', () => {
 
       // size guard fires BEFORE magic-byte detection / upload
       expect(storageService.uploadFile).not.toHaveBeenCalled();
-      expect(fileTypeFromBuffer).not.toHaveBeenCalled();
+      expect(FileType.fromBuffer).not.toHaveBeenCalled();
     });
 
     it('re-checks expiration at upload time and throws when expiresAt has passed mid-session', async () => {

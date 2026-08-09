@@ -1,4 +1,5 @@
-﻿/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+﻿/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
   Injectable,
@@ -20,8 +21,7 @@ import {
   ALLOWED_MIME_TYPES,
 } from '../../common/constants';
 import { MetricsService } from '../../metrics/metrics.service';
-import { fileTypeFromBuffer } from 'file-type';
-
+import * as FileType from 'file-type';
 export type UploadedDepositFile = {
   originalname: string;
   buffer: Buffer;
@@ -158,7 +158,7 @@ export class PublicService {
     }
 
     // --- Magic-byte verification (do NOT trust file.mimetype) ---
-    const detected = await fileTypeFromBuffer(file.buffer);
+    const detected = await FileType.fromBuffer(file.buffer);
     if (!detected || !ALLOWED_MIME_TYPES.has(detected.mime)) {
       throw new BadRequestException('type de fichier non autorisé');
     }
