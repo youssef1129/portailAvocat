@@ -4,7 +4,7 @@ import { Button } from "@chakra-ui/react";
 import type { ButtonProps } from "@chakra-ui/react";
 import { primaryButtonVariant, outlineButtonVariant, buttonSizes } from "../../theme/system";
 
-export type PrimaryButtonProps = ButtonProps & {
+export type PrimaryButtonProps = Omit<ButtonProps, "size" | "variant"> & {
   loading?: boolean;
   variant?: "primary" | "outline";
   size?: "sm" | "md" | "lg";
@@ -13,7 +13,7 @@ export type PrimaryButtonProps = ButtonProps & {
 const variants = {
   primary: primaryButtonVariant,
   outline: outlineButtonVariant,
-};
+} as const;
 
 export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   loading = false,
@@ -21,11 +21,14 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   size = "md",
   ...rest
 }) => {
+  const variantStyles = variants[variant];
+  const sizeStyles = buttonSizes[size];
+
   return (
     <Button
-      {...variants[variant]}
-      {...buttonSizes[size]}
-      {...(rest as ButtonProps)}
+      {...variantStyles}
+      {...sizeStyles}
+      {...rest}
       loading={loading}
       display="inline-flex"
       alignItems="center"
