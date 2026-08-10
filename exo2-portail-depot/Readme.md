@@ -190,6 +190,17 @@ Documentées explicitement plutôt que découvertes en review :
 - **Pas d'antivirus ni de vérification de type de fichier** sur les pièces déposées au-delà de la validation d'extension côté frontend — un client malveillant pourrait techniquement déposer un fichier dont le contenu ne correspond pas à son extension déclarée.
 - **Pas de journal d'audit persistant** des accès aux liens publics au-delà des métriques Prometheus agrégées (rétention 15 jours) — pas de trace nominative et durable consultable après coup pour un lien donné.
 
+### Ce que je ferais en plus avec plus de temps
+
+Pas implémenté dans ce périmètre, par ordre de priorité si le projet devait continuer :
+
+- **`GET /requests` n'est pas paginé.** Fonctionne tel quel pour un avocat avec quelques dizaines de demandes, mais ne passerait pas à l'échelle sans limite/offset (ou curseur) côté requête et un index explicite sur `lawyer_id` — actuellement, TypeORM/PostgreSQL crée un index implicite sur la FK, mais aucun index composite `(lawyer_id, created_at)` n'a été ajouté pour accélérer un tri par date sur un grand volume.
+- **Pas de filtre d'exception global (`ExceptionFilter`).** Les erreurs sont actuellement gérées service par service (`NotFoundException`, `UnauthorizedException`, etc., levées directement), ce qui fonctionne mais duplique la forme de réponse d'erreur entre modules. Un filtre global uniformiserait le format JSON d'erreur (code, message, timestamp) sur toute l'API, et centraliserait la journalisation des erreurs 5xx inattendues.
+- **Pas d'enveloppe de réponse uniforme.** Chaque endpoint renvoie directement son DTO, sans structure commune (`{ data, meta }` par exemple). Correct pour le périmètre actuel, mais deviendrait utile pour standardiser la pagination une fois ajoutée, et pour donner un point d'accroche unique à un éventuel versionnage de contrat.
+- **Logging non structuré.** Le `Logger` NestJS par défaut est utilisé tel quel (texte, console). Un logger structuré (JSON, avec correlation ID par requête) faciliterait la corrélation entre une entrée de log et une trace Prometheus/Grafana pour un incident donné, et rendrait les logs exploitables par un outil d'agrégation (ex. Loki) si l'observabilité devait s'étendre au-delà des métriques.
+
+Aucun de ces points n'était strictement requis par le périmètre de l'exercice ; ils sont listés ici parce qu'ils seraient les prochains à traiter dans un contexte de production réelle, par ordre d'impact décroissant sur la performance et la maintenabilité à long terme.
+
 ---
 
 ## Déploiement HTTPS
